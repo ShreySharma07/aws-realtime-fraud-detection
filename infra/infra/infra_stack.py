@@ -4,13 +4,13 @@ from aws_cdk import (
     Stack,
     aws_s3 as s3,
     aws_lambda as _lambda,
-    aws_apigatewayv2_alpha as apigwv2,
-    aws_apigatewayv2_integration_alpha as apigw_integrations,
+    aws_apigatewayv2 as apigwv2,
     # aws_sqs as sqs,
 )
 import os
 import aws_cdk as cdk
 from constructs import Construct
+from aws_cdk.aws_apigatewayv2_integrations import HttpLambdaIntegration
 
 class InfraStack(cdk.Stack):
 
@@ -44,6 +44,7 @@ class InfraStack(cdk.Stack):
         )
 
         #grating permission to lambda to read files
+        model_bucket.grant_read(fraud_detection_lambda)
         #create a public url to trigger the lambda function
         http_api = apigwv2.HttpApi(
             self,
@@ -57,7 +58,7 @@ class InfraStack(cdk.Stack):
 
         #creating the integration
         #this connects post request to the apiendpoint /
-        lambda_integration = apigw_integrations.HttpLambdaIntegration(
+        lambda_integration = HttpLambdaIntegration(
             "LambdaIntegration",
             fraud_detection_lambda
         )

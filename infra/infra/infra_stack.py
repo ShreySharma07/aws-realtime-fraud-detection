@@ -1,82 +1,109 @@
-from aws_cdk import (
-    # Duration,
-    #core as cdk,
-    Stack,
-    aws_s3 as s3,
-    aws_lambda as _lambda,
-    aws_apigatewayv2 as apigwv2,
-    # aws_sqs as sqs,
-)
-import os
 import aws_cdk as cdk
+from aws_cdk import (
+    Stack,
+    aws_s3_assets as s3_assets,
+    aws_lambda as _lambda,
+    aws_iam as iam,
+    aws_sagemaker as sagemaker,
+    aws_apigatewayv2,
+    aws_apigatewayv2_integrations,
+)
 from constructs import Construct
-from aws_cdk.aws_apigatewayv2_integrations import HttpLambdaIntegration
+import os
 
-class InfraStack(cdk.Stack):
+class InfraStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        # The code that defines your stack goes here
+        # 1. Upload the packaged model to S3 as a CDK Asset
+        model_asset = s3_assets.Asset(self, "SageMakerModelAsset",
+            path=os.path.join(os.getcwd(), "..", "model.tar.gz")
+        )
 
-        # example resource
-        # queue = sqs.Queue(
-        #     self, "InfraQueue",
-        #     visibility_timeout=Duration.seconds(300),
-        # )
-        model_bucket = s3.Bucket(self, "FraudModeklBucket",
-                                 removal_policy = cdk.RemovalPolicy.DESTROY,
-                                 auto_delete_objects = True)
-        
-        #defining lambda our serverless function
-        fraud_detection_lambda = _lambda.Function(
-            self,
-            'FraudDetectionModel',
-            runtime = _lambda.Runtime.PYTHON_3_8,
-            handler = 'lambda_function.handler',
-            code = _lambda.Code.from_asset(os.path.join(os.getcwd(), "..", "src")),
-            memory_size = 512,
-            timeout = cdk.Duration.seconds(30),
-            environment = {
-                'MODEL_BUCKET_NAME': model_bucket.bucket_name,
-                "MODEL_FILE_KEY": "fraud_detection_model.joblib"
+        # 2. Define the SageMaker Execution Role with comprehensive permissions
+        sagemaker_role = iam.Role(self, "SageMakerExecutionRole",
+            assumed_by=iam.ServicePrincipal("sagemaker.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSageMakerFullAccess")
+            ],
+            inline_policies={
+                "SageMakerModelAccess": iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            actions=[
+                                "s3:GetObject",
+                                "s3:ListBucket",
+                                "s3:GetBucketLocation"
+                            ],
+                            resources=["*"]
+                        ),
+                        iam.PolicyStatement(
+                            actions=[
+                                "ecr:GetDownloadUrlForLayer",
+                                "ecr:BatchGetImage",
+                                "ecr:BatchCheckLayerAvailability",
+                                "ecr:GetAuthorizationToken"
+                            ],
+                            resources=["*"]
+                        )
+                    ]
+                )
             }
         )
 
-        #grating permission to lambda to read files
-        model_bucket.grant_read(fraud_detection_lambda)
-        #create a public url to trigger the lambda function
-        http_api = apigwv2.HttpApi(
-            self,
-            'FraudDetectionApi',
-            cors_preflight = apigwv2.CorsPreflightOptions(
-                allow_headers = ['Content-Type'],
-                allow_methods=[apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.OPTIONS],
-                allow_origins=["*"],
+        # 5. Use the correct SageMaker XGBoost container URI for ap-south-1
+        image_uri = "720646828776.dkr.ecr.ap-south-1.amazonaws.com/sagemaker-xgboost:1.7-1"
+
+        # 6. Define the SageMaker Model
+        sagemaker_model = sagemaker.CfnModel(self, "SageMakerCfnModel",
+            execution_role_arn=sagemaker_role.role_arn,
+            primary_container=sagemaker.CfnModel.ContainerDefinitionProperty(
+                image=image_uri,
+                model_data_url=model_asset.s3_object_url
             )
         )
+        sagemaker_model.node.add_dependency(model_asset)
 
-        #creating the integration
-        #this connects post request to the apiendpoint /
-        lambda_integration = HttpLambdaIntegration(
-            "LambdaIntegration",
-            fraud_detection_lambda
+        # 7. Define the SageMaker Endpoint Configuration
+        endpoint_config = sagemaker.CfnEndpointConfig(self, "SageMakerEndpointConfig",
+            production_variants=[sagemaker.CfnEndpointConfig.ProductionVariantProperty(
+                initial_instance_count=1,
+                instance_type="ml.t2.medium",
+                model_name=sagemaker_model.attr_model_name,
+                variant_name="AllTraffic"
+            )]
         )
 
+        # 8. Create the SageMaker Endpoint
+        sagemaker_endpoint = sagemaker.CfnEndpoint(self, "SageMakerEndpoint",
+            endpoint_config_name=endpoint_config.attr_endpoint_config_name,
+            endpoint_name="fraud-detection-endpoint"
+        )
+
+        # 9. Define the Proxy Lambda Function
+        proxy_lambda = _lambda.Function(self, "ProxyLambda",
+            runtime=_lambda.Runtime.PYTHON_3_8,
+            handler="lambda_function.handler",
+            code=_lambda.Code.from_asset(os.path.join(os.getcwd(), "..", "src")),
+            timeout=cdk.Duration.seconds(30),
+            environment={
+                "SAGEMAKER_ENDPOINT_NAME": sagemaker_endpoint.endpoint_name
+            }
+        )
+        proxy_lambda.add_to_role_policy(iam.PolicyStatement(
+            actions=["sagemaker:InvokeEndpoint"],
+            resources=[sagemaker_endpoint.ref]
+        ))
+
+        # 10. Define the API Gateway
+        http_api = aws_apigatewayv2.HttpApi(self, "FraudDetectionApi")
+        lambda_integration = aws_apigatewayv2_integrations.HttpLambdaIntegration("LambdaIntegration", proxy_lambda)
         http_api.add_routes(
             path="/",
-            methods=[apigwv2.HttpMethod.POST],
+            methods=[aws_apigatewayv2.HttpMethod.POST],
             integration=lambda_integration
         )
 
-        cdk.CfnOutput(
-            self,
-            "ModelBucketName",
-            value = model_bucket.bucket_name,
-            description="The name of the S3 bucket for the fraud detection model."
-        )
-
-        cdk.CfnOutput(self, "ApiEndpointUrl",
-            value=http_api.url,
-            description="The URL of the API Gateway endpoint."
-        )
+        # 11. Output the API URL
+        cdk.CfnOutput(self, "ApiEndpointUrl", value=http_api.url)

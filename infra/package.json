@@ -1,0 +1,7 @@
+{
+  "name": "infra",
+  "version": "0.1.0",
+  "dependencies": {
+    "aws-cdk": "2.147.3"
+  }
+}

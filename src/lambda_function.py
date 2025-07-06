@@ -1,61 +1,49 @@
 import json
-import joblib
-import os
 import boto3
-import numpy as np
+import os
 
+SAGEMAKER_ENDPOINT_NAME = os.environ.get('SAGEMAKER_ENDPOINT_NAME', '')
 
-MODEL_BUCKET_NAME = os.environ.get('MODEL_BUCKET_NAME', '')
-MODEL_FILE_KEY = os.environ.get('MODEL_FILE_KEY', 'fraud_detection_model.joblib')
-
-s3_client = boto3.client('s3')
-
-local_model_path = f'/tmp/{MODEL_FILE_KEY}'
-s3_client.download_file(MODEL_BUCKET_NAME, MODEL_FILE_KEY, local_model_path)
-
-model = joblib.load(local_model_path)
-
-print('Model loaded successfully')
+sagemaker_runtime = boto3.client('sagemaker-runtime')
 
 def handler(event, context):
 
-    print('recieved event', json.dump(event))
+    print('Recieved event', json.dumps(event))
 
     try:
-        body = json.loads(event.get("body", '{}'))
 
-        features_columns = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
+        body = event.get('body', '{}')
 
-        if not all(col in body for col in features_columns):
-            return {
-                'statusCode' : 400,
-                'headers' : {'Content-Type': 'application/json'},
-                'body' : json.dumps({'error': 'Missing one or more required features.'})
-            }
-        
-        features = [body[col] for col in features_columns]
+        transaction_data = json.loads(body)
 
-        transaction_array = np.array(features).reshape(1, -1)
+        feature_columns = [f'V{i}' for i in range(1, 29)] + ['Amount']
 
-        #Making a prediction
-        prediction = model.predict(transaction_array)[0]
-        prediction_proba = model.predict_proba(transaction_array)[0]
+        payload_values = [transaction_data[col] for col in feature_columns]
 
-        response_body = {
-            'is_fraud': bool(prediction),
-            'fraud_probability': float(prediction_proba[1]),
-            'model_version': MODEL_FILE_KEY
-        }
+        csv_payload = ','.join(map(str, payload_values))
 
+        response = sagemaker_runtime.invoke_endpoint(
+            EndpointName = SAGEMAKER_ENDPOINT_NAME,
+            ContentType = 'text/csv',
+            Body = csv_payload
+        )
+
+        prediction = response['Body'].read().decode('utf-8')
+
+        #----format the successful response----
         return {
             'statusCode': 200,
-            'headers': {'Content-Type', 'application/json'},
-            'body': json.dumps(response_body)
+            'headers': { 'Content-Type': 'application/json'},
+            'body': json.dumps({
+                'is_fraud': bool(float(prediction) > 0.5),
+                'fraud_score': float(prediction)
+            })
         }
+    
     except Exception as e:
-        print(f"Error processing request: {e}")
+        print(f'Error processing request: {e}')
         return {
             'statusCode': 500,
-            'headers': {'Content-Type': 'application/json'},
-            'body': json.dumps({'error': 'Internal server error during prediction.'})
+            'headers': {'Content-Type': 'application/json' },
+            'body': json.dumps({'error': 'Internal server error.'})
         }

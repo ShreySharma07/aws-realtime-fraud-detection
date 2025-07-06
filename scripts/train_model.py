@@ -56,6 +56,23 @@ print("\nArea Under ROC Curve (AUC-ROC):")
 print(roc_auc_score(y_test, y_pred_proba_test))
 print("--------------------------")
 
+# Save model in joblib format (for local use)
 model_filename = 'fraud_detection_model.joblib'
 joblib.dump(model, model_filename)
 print(f"\nModel saved successfully as '{model_filename}'")
+
+# Save model in XGBoost format for SageMaker deployment
+import os
+os.makedirs('model_artifacts', exist_ok=True)
+joblib.dump(model, 'model_artifacts/fraud_detection_model.joblib')
+
+# Also save in XGBoost native format for SageMaker
+os.makedirs('xgb_model', exist_ok=True)
+model.save_model('xgb_model/xgboost-model')
+print("Model also saved in XGBoost format for SageMaker deployment")
+
+# Create model.tar.gz for SageMaker
+import tarfile
+with tarfile.open('model.tar.gz', 'w:gz') as tar:
+    tar.add('xgb_model/xgboost-model', arcname='xgboost-model')
+print("Model packaged as 'model.tar.gz' for SageMaker deployment")

@@ -88,7 +88,8 @@ class InfraStack(Stack):
             code=_lambda.Code.from_asset(os.path.join(os.getcwd(), "..", "src")),
             timeout=cdk.Duration.seconds(30),
             environment={
-                "SAGEMAKER_ENDPOINT_NAME": sagemaker_endpoint.endpoint_name
+                "SAGEMAKER_ENDPOINT_NAME": sagemaker_endpoint.endpoint_name,
+                "GEMINI_API_KEY": self.node.try_get_context('REMOVED_API_KEY')
             }
         )
         proxy_lambda.add_to_role_policy(iam.PolicyStatement(

@@ -2,11 +2,15 @@ import json
 import boto3
 import os
 import urllib3
+import uuid
+from datetime import datetime
 
 SAGEMAKER_ENDPOINT_NAME = os.environ.get('SAGEMAKER_ENDPOINT_NAME', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY',"")
+PREDICTIONS_TABLE_NAME = os.environ.get('PREDICTIONS_TABLE_NAME', '')
 
 sagemaker_runtime = boto3.client('sagemaker-runtime')
+dynamodb = boto3.resource('dynamodb')
 http = urllib3.PoolManager()
 
 
@@ -97,12 +101,31 @@ def handler(event, context):
         if is_fraud:
             explanation = get_gemini_explaination(transaction_data, fraud_score)
 
+        # Store prediction in DynamoDB
+        prediction_id = str(uuid.uuid4())
+        if PREDICTIONS_TABLE_NAME:
+            try:
+                table = dynamodb.Table(PREDICTIONS_TABLE_NAME)
+                table.put_item(
+                    Item={
+                        'predictionID': prediction_id,
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'is_fraud': is_fraud,
+                        'fraud_score': fraud_score,
+                        'explanation': explanation,
+                        'transaction_amount': transaction_data.get('Amount', 0)
+                    }
+                )
+            except Exception as e:
+                print(f"Error storing prediction in DynamoDB: {e}")
+
         #----format the successful response----
         return {
             'statusCode': 200,
             'headers': { 'Content-Type': 'application/json',
                         "Access-Control-Allow-Origin": "*"},
             'body': json.dumps({
+                'prediction_id': prediction_id,
                 'is_fraud': is_fraud,
                 'fraud_score': fraud_score,
                 'explanation': explanation

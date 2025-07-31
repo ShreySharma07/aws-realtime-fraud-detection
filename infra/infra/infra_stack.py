@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_sagemaker as sagemaker,
     aws_apigatewayv2,
     aws_apigatewayv2_integrations,
+    aws_dynamodb as dynamodb
 )
 from constructs import Construct
 import os
@@ -17,6 +18,12 @@ class InfraStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+
+        #Creating AWSDynamoDB Table for feedback and prediction
+        predictions_table = dynamodb.Table(self, "FraudPredictionTable",
+            partition_key = dynamodb.Attribute(name='predictionID', type=dynamodb.AttributeType.STRING),
+            billing_mode = dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy = cdk.RemovalPolicy.DESTROY)
 
         # 1. Upload the packaged model to S3 as a CDK Asset
         model_asset = s3_assets.Asset(self, "SageMakerModelAsset",
@@ -91,13 +98,17 @@ class InfraStack(Stack):
             timeout=cdk.Duration.seconds(30),
             environment={
                 "SAGEMAKER_ENDPOINT_NAME": sagemaker_endpoint.endpoint_name,
-                "GEMINI_API_KEY": self.node.try_get_context('GEMINI_API_KEY')
+                "GEMINI_API_KEY": self.node.try_get_context('GEMINI_API_KEY'),
+                "PREDICTIONS_TABLE_NAME": predictions_table.table_name
             }
         )
         proxy_lambda.add_to_role_policy(iam.PolicyStatement(
             actions=["sagemaker:InvokeEndpoint"],
             resources=[sagemaker_endpoint.ref]
         ))
+        
+        # Grant Lambda permission to write to DynamoDB
+        predictions_table.grant_write_data(proxy_lambda)
 
         # 10. Define the API Gateway
         http_api = aws_apigatewayv2.HttpApi(self, "FraudDetectionApi")
@@ -110,3 +121,4 @@ class InfraStack(Stack):
 
         # 11. Output the API URL
         cdk.CfnOutput(self, "ApiEndpointUrl", value=http_api.url)
+        cdk.CfnOutput(self, "PredictionsTableName", value=predictions_table.table_name)

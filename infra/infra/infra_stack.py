@@ -11,6 +11,8 @@ from aws_cdk import (
 from constructs import Construct
 import os
 
+# GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY',"")
+
 class InfraStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
@@ -89,7 +91,7 @@ class InfraStack(Stack):
             timeout=cdk.Duration.seconds(30),
             environment={
                 "SAGEMAKER_ENDPOINT_NAME": sagemaker_endpoint.endpoint_name,
-                "GEMINI_API_KEY": self.node.try_get_context('REMOVED_API_KEY')
+                "GEMINI_API_KEY": self.node.try_get_context('GEMINI_API_KEY')
             }
         )
         proxy_lambda.add_to_role_policy(iam.PolicyStatement(

@@ -1,147 +1,3 @@
-# import streamlit as st
-# import pandas as pd
-# import plotly.express as px
-# import os
-# import requests
-# import json
-
-# # --- Page Configuration ---
-# st.set_page_config(
-#     page_title="Aura: Trust & Safety Dashboard",
-#     page_icon="🛡️",
-#     layout="wide",
-#     initial_sidebar_state="expanded"
-# )
-
-
-# API_ENDPOINT = 'https://a6ko7tolzh.execute-api.ap-south-1.amazonaws.com/'
-
-# # --- Data Loading ---
-# @st.cache_data
-# def load_data():
-#     """Loads the credit card fraud dataset."""
-#     try:
-#         data_path = os.path.join('data', 'creditcard.csv')
-#         df = pd.read_csv(data_path)
-#         return df
-#     except FileNotFoundError:
-#         st.error(f"Error: The data file was not found at '{data_path}'.")
-#         return None
-
-# df = load_data()
-
-# # --- Helper Function for API Calls ---
-# def get_prediction(transaction_data):
-#     """Calls the live API endpoint to get a prediction and explanation."""
-#     try:
-#         headers = {'Content-Type': 'application/json'}
-#         response = requests.post(API_ENDPOINT, data=json.dumps(transaction_data), headers=headers)
-#         response.raise_for_status() 
-#         return response.json()
-#     except requests.exceptions.RequestException as e:
-#         st.error(f"API Error: Could not connect to the endpoint. Details: {e}")
-#         return None
-
-# # --- Main Application ---
-# if df is not None:
-    
-#     # --- Sidebar ---
-#     st.sidebar.title("Aura Command Center 🛡️")
-#     st.sidebar.header("Live Investigation")
-#     st.sidebar.markdown("Select a transaction from the table below and click 'Investigate' to get a real-time prediction and AI-powered explanation.")
-    
-#     if 'selected_transaction' not in st.session_state:
-#         st.session_state.selected_transaction = None
-    
-#     # --- Main Dashboard Display ---
-#     st.title("Transaction Monitoring & Investigation")
-    
-#     # --- Key Performance Indicators (KPIs) ---
-#     total_transactions = df.shape[0]
-#     total_fraud = df[df['Class'] == 1].shape[0]
-#     total_value_at_risk = df[df['Class'] == 1]['Amount'].sum()
-    
-#     col1, col2, col3 = st.columns(3)
-#     with col1:
-#         st.metric(label="Total Transactions in Dataset", value=f"{total_transactions:,}")
-#     with col2:
-#         st.metric(label="Historical Fraudulent Transactions", value=f"{total_fraud:,}")
-#     with col3:
-#         st.metric(label="Historical Value at Risk", value=f"${total_value_at_risk:,.2f}")
-
-#     st.markdown("---")
-
-#     # --- Investigation Section ---
-#     st.header("GenAI Fraud Investigator")
-    
-#     investigation_col1, investigation_col2 = st.columns([1, 2])
-
-#     with investigation_col1:
-#         st.subheader("Selected Transaction")
-#         if st.session_state.selected_transaction is not None:
-#             selected_data = df.loc[st.session_state.selected_transaction]
-#             st.json(selected_data.to_json())
-            
-#             if st.button("Get Live Prediction & Explanation", key="investigate_button"):
-#                 payload = selected_data.to_dict()
-#                 with st.spinner("Calling SageMaker & Gemini..."):
-#                     prediction_result = get_prediction(payload)
-#                     st.session_state.prediction_result = prediction_result
-#         else:
-#             st.info("Select a transaction from the table below to begin.")
-
-#     with investigation_col2:
-#         st.subheader("Investigation Results")
-#         if 'prediction_result' in st.session_state and st.session_state.prediction_result:
-#             result = st.session_state.prediction_result
-            
-#             if result.get('is_fraud'):
-#                 st.error("**Fraud Alert!**")
-#             else:
-#                 st.success("**Transaction Appears Safe**")
-            
-#             st.metric(label="Model Fraud Score", value=f"{result.get('fraud_score', 0):.4f}")
-            
-#             st.markdown("---")
-#             st.subheader("AI Analyst Explanation:")
-#             st.info(result.get('explanation', "No explanation provided."))
-#         else:
-#             st.info("Results will appear here after investigation.")
-
-
-#     st.markdown("---")
-
-#     # --- Data Table for Investigation ---
-#     st.header("Transaction Details for Review")
-    
-#     sample_df = pd.concat([
-#         df[df['Class'] == 0].head(20),
-#         df[df['Class'] == 1].head(20)
-#     ]).reset_index()
-
-#     # Create a button column
-#     sample_df['Select'] = False
-    
-#     edited_df = st.data_editor(
-#         sample_df,
-#         column_config={
-#             "Select": st.column_config.CheckboxColumn(
-#                 "Select for Investigation",
-#                 default=False,
-#             )
-#         },
-#         disabled=df.columns,
-#         hide_index=True,
-#     )
-
-#     selected_row = edited_df[edited_df.Select]
-#     if not selected_row.empty:
-#         original_index = selected_row.iloc[0]['index']
-#         st.session_state.selected_transaction = original_index
-#         st.rerun()
-
-
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -161,7 +17,7 @@ st.set_page_config(
 )
 
 # --- Global Variables ---
-API_ENDPOINT = "https://5g474z69ma.execute-api.ap-south-1.amazonaws.com/" 
+API_ENDPOINT = "https://c5cqn983uh.execute-api.ap-south-1.amazonaws.com/" 
 
 # --- Data Loading ---
 @st.cache_data
@@ -231,19 +87,17 @@ def get_ml_prediction(transaction_data):
 # --- Main Application ---
 if df is not None:
     
-    st.sidebar.title("Aura Command Center")
-    st.sidebar.image("https://i.imgur.com/vVsi6Yw.png", width=100)
-    st.sidebar.markdown("Welcome to the Aura Trust & Safety platform.")
+    st.sidebar.title("Fraud Detection Center")
+    st.sidebar.markdown("Welcome to the Trust & Safety platform.")
 
     #page Navigation
     page = st.sidebar.radio("Navigator", ["Live Investigation", "Statistical Intelligence"])
     
-    st.title(" Trust & Safety Platform")
+    #st.title(" Trust & Safety Platform")
     
     if page == 'Live Investigation':
         st.title("GenAI Fraud Investigator")
         col_input, col_result = st.columns([1, 1.5])
-        # KPIs remain the same
         total_transactions = df.shape[0]
         total_fraud = df[df['Class'] == 1].shape[0]
         total_value_at_risk = df[df['Class'] == 1]['Amount'].sum()
@@ -262,7 +116,6 @@ if df is not None:
             st.subheader("Investigation Method")
             tab1, tab2 = st.tabs(["Manual Input", "Select from Table"])
 
-            # This function handles the logic for both manual and selected transactions
             def process_investigation(payload):
                 with st.spinner("Analyzing transaction..."):
                     # Step 1: Run the Rule-Based Engine first
@@ -364,7 +217,7 @@ if df is not None:
 
             # Create the SHAP summary plot
             fig = go.Figure()
-            # We are plotting the mean absolute SHAP value for each feature
+            # plotting the mean absolute SHAP value for each feature
             mean_abs_shap = pd.DataFrame(shap_values.values, columns=sample_for_shap.columns).abs().mean().sort_values(ascending=False)
             
             fig.add_trace(go.Bar(

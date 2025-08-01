@@ -1,0 +1,9 @@
+version: 1.0
+runtime: python3
+build:
+  commands:
+    build:
+      - pip install -r requirements.txt
+run:
+  command: streamlit run dashboard_app.py --server.port 8080 --server.headless true
+  port: 8080

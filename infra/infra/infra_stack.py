@@ -98,7 +98,7 @@ class InfraStack(Stack):
             timeout=cdk.Duration.seconds(30),
             environment={
                 "SAGEMAKER_ENDPOINT_NAME": sagemaker_endpoint.endpoint_name,
-                "GEMINI_API_KEY": self.node.try_get_context('GEMINI_API_KEY'),
+                "GEMINI_API_KEY": self.node.try_get_context('GEMINI_API_KEY') or "",
                 "PREDICTIONS_TABLE_NAME": predictions_table.table_name
             }
         )
@@ -108,7 +108,19 @@ class InfraStack(Stack):
         ))
         
         # Grant Lambda permission to write to DynamoDB
-        predictions_table.grant_write_data(proxy_lambda)
+        predictions_table.grant_read_write_data(proxy_lambda)
+
+        #Feedback Handler Lambda Function
+        feedback_lambda = _lambda.Function(self, "FeedbackLambda",
+            runtime = _lambda.Runtime.PYTHON_3_8,
+            handler = "feedback_handler.handler",
+            code = _lambda.Code.from_asset(os.path.join(os.getcwd(), "..", "src")),
+            timeout = cdk.Duration.seconds(30),
+            environment={
+                "PREDICTIONS_TABLE_NAME": predictions_table.table_name
+            })
+        
+        predictions_table.grant_read_write_data(feedback_lambda)
 
         # 10. Define the API Gateway
         http_api = aws_apigatewayv2.HttpApi(self, "FraudDetectionApi")
@@ -117,6 +129,14 @@ class InfraStack(Stack):
             path="/",
             methods=[aws_apigatewayv2.HttpMethod.POST],
             integration=lambda_integration
+        )
+
+        #Integration for the feedback endpoint (/feedback)
+        feedback_integration = aws_apigatewayv2_integrations.HttpLambdaIntegration("FeedbackIntegration", feedback_lambda)
+        http_api.add_routes(
+            path="/feedback",
+            methods=[aws_apigatewayv2.HttpMethod.POST],
+            integration=feedback_integration
         )
 
         # 11. Output the API URL

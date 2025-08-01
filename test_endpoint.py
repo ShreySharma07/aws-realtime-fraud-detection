@@ -2,7 +2,7 @@ import requests
 import json
 
 # API endpoint URL
-url = "https://8jwpdmqgza.execute-api.ap-south-1.amazonaws.com/"
+url = "https://rf8k0kegqh.execute-api.ap-south-1.amazonaws.com/"
 
 # Sample transaction data (29 features V1-V28 + Amount)
 test_data = {

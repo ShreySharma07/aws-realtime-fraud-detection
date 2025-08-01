@@ -4,6 +4,7 @@ import os
 import urllib3
 import uuid
 from datetime import datetime
+from decimal import Decimal
 
 SAGEMAKER_ENDPOINT_NAME = os.environ.get('SAGEMAKER_ENDPOINT_NAME', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY',"")
@@ -106,14 +107,16 @@ def handler(event, context):
         if PREDICTIONS_TABLE_NAME:
             try:
                 table = dynamodb.Table(PREDICTIONS_TABLE_NAME)
+                transaction_data_decimal = json.loads(json.dumps(transaction_data), parse_float=Decimal)
                 table.put_item(
                     Item={
                         'predictionID': prediction_id,
                         'timestamp': datetime.utcnow().isoformat(),
-                        'is_fraud': is_fraud,
-                        'fraud_score': fraud_score,
-                        'explanation': explanation,
-                        'transaction_amount': transaction_data.get('Amount', 0)
+                        'is_fraud': int(is_fraud),
+                        'fraud_score': Decimal(str(fraud_score)),
+                        'transaction_data': transaction_data_decimal, # Store the full transaction
+                        'feedback_status': 'PENDING', # Initial status
+                        'correct_label': None # Placeholder for human feedback
                     }
                 )
             except Exception as e:

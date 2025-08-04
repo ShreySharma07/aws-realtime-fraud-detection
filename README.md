@@ -68,17 +68,13 @@ Aura is a multi-layered platform designed to solve real-world business problems.
 
 An interactive Streamlit dashboard serves as the command center for fraud analysts. It connects to a live API Gateway endpoint that triggers a lightweight AWS Lambda proxy. This proxy invokes a high-performance Amazon SageMaker endpoint hosting an XGBoost model, returning predictions with **<200ms p99 latency** and a **97.7% AUC score**.
 
-<p align="center">
-<img src=".github/assets/dashboard.png" alt="Analyst Dashboard Screenshot">
-</p>
+![](assests/dashboard.png)
 
 ### 🧠 GenAI Fraud Investigator (XAI)
 
 To provide Explainable AI, the Lambda proxy enriches high-risk predictions by calling the **Gemini API**. It generates a human-readable summary explaining why a transaction was flagged, based on its most anomalous features. This drastically reduces manual investigation time.
 
-<p align="center">
-<img src=".github/assets/genai_investigator.png" alt="GenAI Investigator Screenshot">
-</p>
+![](assests/genai.png)
 
 ### 🛡️ Hybrid Rule Engine
 
@@ -88,9 +84,6 @@ A pre-screening layer of simple business rules catches extreme outliers (e.g., t
 
 The dashboard allows analysts to submit feedback ("Correct" / "Incorrect") on model predictions. This feedback is sent to a dedicated `/feedback` API endpoint, triggering a second Lambda function that updates the prediction record in a DynamoDB table, changing its status from `PENDING` to `VERIFIED`.
 
-<p align="center">
-<img src=".github/assets/hitl_feedback.png" alt="HITL Feedback System Screenshot">
-</p>
 
 ### 🔁 Automated Retraining Pipeline
 

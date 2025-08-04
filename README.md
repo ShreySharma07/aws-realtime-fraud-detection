@@ -46,9 +46,7 @@ A full walkthrough and demonstration of the platform—from the live analyst das
 
 The platform is architected using a modern, serverless-first approach on AWS, separating the low-latency real-time inference path from the asynchronous, event-driven retraining path.
 
-<p align="center">
-<img src=".github/assets/architecture.png" alt="Aura Platform Architecture Diagram">
-</p>
+![](assests/my.png)
 
 ### 🏗️ Architecture Components:
 

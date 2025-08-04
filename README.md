@@ -93,17 +93,13 @@ A complete MLOps pipeline orchestrated by **AWS Step Functions**. On a schedule,
 - 🎯 Creates a new model
 - 🚀 Performs zero-downtime "blue/green" deployment
 
-<p align="center">
-<img src=".github/assets/step_functions.png" alt="Step Functions Pipeline Screenshot">
-</p>
+![](assests/retraining.png)
 
 ### 📈 Statistical Intelligence
 
 A dedicated dashboard section provides deep data science insights, including a **SHAP analysis chart** to explain global feature importance and a business impact analysis that quantifies the correlation between key features and financial risk.
 
-<p align="center">
-<img src=".github/assets/shap_analysis.png" alt="SHAP Analysis Screenshot">
-</p>
+![](assests/stats.png)
 
 ---
 

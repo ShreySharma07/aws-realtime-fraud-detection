@@ -110,7 +110,7 @@ def handler(event, context):
                 transaction_data_decimal = json.loads(json.dumps(transaction_data), parse_float=Decimal)
                 table.put_item(
                     Item={
-                        'predictionID': prediction_id,
+                        'predictionId': prediction_id,
                         'timestamp': datetime.utcnow().isoformat(),
                         'is_fraud': int(is_fraud),
                         'fraud_score': Decimal(str(fraud_score)),

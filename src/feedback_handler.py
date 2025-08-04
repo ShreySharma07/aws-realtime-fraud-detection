@@ -24,7 +24,7 @@ def handler(event, context):
             print(f"Updating item {prediction_id} with correct_label {correct_label}...")
 
             response = table.update_item(
-                Key={'predictionID': prediction_id},
+                Key={'predictionId': prediction_id},
                 UpdateExpression="SET correct_label = :label, feedback_status = :status, feedback_timestamp = :ts",
                 ExpressionAttributeValues={
                     ':label': int(correct_label), # Ensure it's an integer (0 or 1)

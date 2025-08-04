@@ -15,7 +15,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-API_ENDPOINT = "https://0jlgazyidj.execute-api.ap-south-1.amazonaws.com/" 
+API_ENDPOINT = "https://bnm4ojywee.execute-api.ap-south-1.amazonaws.com/" 
 FEEDBACK_ENDPOINT = f"{API_ENDPOINT}feedback"
 
 # --- Asset Loading ---

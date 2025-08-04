@@ -65,15 +65,7 @@ Deploying the SageMaker architecture revealed the final, most advanced class of 
 
 The final architecture is **scalable**, **cost-effective**, and follows **AWS best practices** for deploying machine learning models.
 
-```
-[Client] ---> [API Gateway] ---> [Proxy Lambda] ---> [SageMaker Endpoint]
-   |               (REST API)         (Simple Proxy)        (ML Model Hosting)
-   |                                                           |
-   |                                                           V
-   '---------------------------------------------------- [S3 Model Artifact]
-```
-
----
+![](assests/my.png)
 
 ## 🛠️ Tech Stack
 

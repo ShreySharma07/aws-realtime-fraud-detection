@@ -44,7 +44,7 @@ A full walkthrough and demonstration of the platform—from the live analyst das
 
 <p align="center">
 <a href="https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID" title="Watch the Project Demo">
-<img src="https://youtu.be/C99CmyPCk3U" alt="Project Demo Video Thumbnail">
+<img src="https://youtu.be/C99CmyPCk3U?si=bxb_6pZXGPDDm1IC" alt="Project Demo Video Thumbnail">
 </a>
 </p>
 

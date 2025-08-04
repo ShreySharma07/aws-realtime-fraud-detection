@@ -23,15 +23,6 @@ A complete serverless machine learning pipeline that detects fraudulent financia
 
 ## 📊 Project Status
 
-> **✅ Status: Completed & Fully Functional**
-
-> **ℹ️ Note:** The live API endpoint and SageMaker instance have been decommissioned to adhere to AWS Free Tier limits and avoid incurring costs. This README provides the final working code, architecture details, and proof of successful deployment and inference.
-
-[![Watch the demo](https://raw.githubusercontent.com/ShreySharma07/aws-realtime-fraud-detection/main/thumbnail.jpg)](https://youtu.be/C99CmyPCk3U)
-
-
-## 📊 Project Status
-
 ✅ **Status:** Completed & Fully Functional
 
 > ℹ️ **Note:** The live API endpoint and SageMaker instance have been decommissioned to adhere to AWS Free Tier limits and avoid incurring costs. This README provides the final working code, architecture details, and proof of successful deployment and inference.

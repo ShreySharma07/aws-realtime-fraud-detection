@@ -42,11 +42,12 @@ A complete serverless machine learning pipeline that detects fraudulent financia
 
 A full walkthrough and demonstration of the platform—from the live analyst dashboard to the automated MLOps pipeline in action—is available on YouTube.
 
-<p align="center">
+<!-- <p align="center">
 <a href="https://www.youtube.com/watch?v=YOUTUBE_VIDEO_ID" title="Watch the Project Demo">
 <img src="https://youtu.be/C99CmyPCk3U?si=bxb_6pZXGPDDm1IC" alt="Project Demo Video Thumbnail">
 </a>
-</p>
+</p> -->
+[![Watch the demo](https://raw.githubusercontent.com/ShreySharma07/aws-realtime-fraud-detection/main/thumbnail.jpg)](https://youtu.be/C99CmyPCk3U)
 
 ---
 
